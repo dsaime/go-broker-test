@@ -56,7 +56,7 @@ func (t Trade) Validate() error {
 
 type TradesRepository interface {
 	Save(Trade) error
-	List() ([]Trade, error)
+	List(TradeListFilter) ([]Trade, error)
 }
 
 type TradeListFilter struct {

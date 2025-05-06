@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Config struct {
@@ -15,7 +16,7 @@ type RepositoryFactory struct {
 }
 
 func InitRepositoryFactory(config Config) (*RepositoryFactory, error) {
-	db, err := sqlx.Connect("sqlite", config.DSN)
+	db, err := sqlx.Connect("sqlite3", config.DSN)
 	if err != nil {
 		return nil, err
 	}
@@ -30,6 +31,6 @@ func InitRepositoryFactory(config Config) (*RepositoryFactory, error) {
 	return rf, nil
 }
 
-func (r *RepositoryFactory) Close() error {
-	return r.db.Close()
+func (f *RepositoryFactory) Close() error {
+	return f.db.Close()
 }
