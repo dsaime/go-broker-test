@@ -53,3 +53,12 @@ func (t Trade) Validate() error {
 
 	return nil
 }
+
+type TradesRepository interface {
+	Save(Trade) error
+	List() ([]Trade, error)
+}
+
+type TradeListFilter struct {
+	Account string
+}
