@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -9,6 +10,7 @@ import (
 
 func newValidTrade() Trade {
 	return Trade{
+		ID:      uuid.NewString(),
 		Account: "732cbdf0",
 		Symbol:  "AAABBB",
 		Volume:  300000.0,
@@ -19,6 +21,30 @@ func newValidTrade() Trade {
 }
 
 func TestTrade_Validate(t *testing.T) {
+	t.Run("ID должно быть валидной uuid-строкой", func(t *testing.T) {
+		trade := newValidTrade()
+		validValues := []string{
+			"414adada-8e00-4a7c-9992-64f45cc771a0",
+			"1d659b09-04c8-49b3-862d-dc41235f30b9",
+			"f5012cc6-b08f-44e0-8a81-96caa22ccd80",
+			"4cb5596d-0dea-45f6-b67a-ccb01206ccf8",
+		}
+		for i := range validValues {
+			trade.ID = validValues[i]
+			require.NoError(t, trade.Validate())
+		}
+
+		invalidValues := []string{
+			"",
+			"1",
+			"b",
+			"123456789012345678901234567890123456789012345678901234567890123456789012345",
+		}
+		for i := range invalidValues {
+			trade.ID = invalidValues[i]
+			require.ErrorIs(t, trade.Validate(), ErrInvalidID)
+		}
+	})
 	t.Run("Account не должно быть пустым", func(t *testing.T) {
 		trade := newValidTrade()
 		trade.Account = ""

@@ -19,6 +19,7 @@ func saveTrade(t *testing.T, repo model.TradesRepository, trade model.Trade) mod
 
 func newRndTrade(t *testing.T, repo model.TradesRepository) model.Trade {
 	return saveTrade(t, repo, model.Trade{
+		ID:      uuid.NewString(),
 		Account: uuid.NewString(),
 		Symbol:  "RANDOM",
 		Volume:  float64(rand.Int63()),
@@ -58,7 +59,10 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 			account := uuid.NewString()
 			expectedTrades := make([]model.Trade, 5)
 			for i := range expectedTrades {
-				expectedTrades[i] = saveTrade(t, r, model.Trade{Account: account})
+				expectedTrades[i] = saveTrade(t, r, model.Trade{
+					ID:      uuid.NewString(),
+					Account: account,
+				})
 			}
 
 			// Получить
@@ -70,14 +74,14 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 		})
 	})
 	t.Run("Save", func(t *testing.T) {
-		t.Run("нельзя сохранять без account", func(t *testing.T) {
+		t.Run("нельзя сохранять без ID", func(t *testing.T) {
 			r := newRepository()
-			err := r.Save(model.Trade{Account: ""})
+			err := r.Save(model.Trade{ID: ""})
 			assert.Error(t, err)
 		})
 		t.Run("остальные поля могут быть пустыми", func(t *testing.T) {
 			r := newRepository()
-			err := r.Save(model.Trade{Account: "qwerty"})
+			err := r.Save(model.Trade{ID: "qwerty"})
 			assert.NoError(t, err)
 		})
 		t.Run("сохраненный можно запросить и он полностью соответствует сохраняемому", func(t *testing.T) {
@@ -90,18 +94,17 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 			// Сравнить
 			assert.Equal(t, savedTrade, tradeFromRepo[0])
 		})
-		t.Run("одинаковые записи будут дублироваться", func(t *testing.T) {
+		t.Run("перезапись при сохранении существующего ID", func(t *testing.T) {
 			r := newRepository()
 
-			const duplicatesCount = 10
 			savedTrade := newRndTrade(t, r)
-			for range duplicatesCount - 1 {
+			for range 10 {
 				saveTrade(t, r, savedTrade)
 			}
 
 			tradeFromRepo, err := r.List(model.TradeListFilter{})
 			require.NoError(t, err)
-			require.Len(t, tradeFromRepo, duplicatesCount)
+			require.Len(t, tradeFromRepo, 1)
 		})
 	})
 }

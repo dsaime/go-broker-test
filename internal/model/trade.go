@@ -3,9 +3,12 @@ package model
 import (
 	"errors"
 	"regexp"
+
+	"github.com/google/uuid"
 )
 
 type Trade struct {
+	ID      string  // must not be empty
 	Account string  // must not be empty
 	Symbol  string  // ^[A-Z]{6}$ (e.g. EURUSD)
 	Volume  float64 // must be > 0
@@ -20,6 +23,7 @@ const (
 )
 
 var (
+	ErrInvalidID      = errors.New("некорректное значение ID")
 	ErrInvalidAccount = errors.New("некорректное значение Account")
 	ErrInvalidSymbol  = errors.New("некорректное значение Symbol")
 	ErrInvalidVolume  = errors.New("некорректное значение Volume")
@@ -31,10 +35,12 @@ var (
 var TradeSymbolRegex = regexp.MustCompile(`^[A-Z]{6}$`)
 
 func (t Trade) Validate() error {
+	if err := uuid.Validate(t.ID); err != nil {
+		return errors.Join(ErrInvalidID, err)
+	}
 	if t.Account == "" {
 		return ErrInvalidAccount
 	}
-
 	if !TradeSymbolRegex.MatchString(t.Symbol) {
 		return ErrInvalidSymbol
 	}

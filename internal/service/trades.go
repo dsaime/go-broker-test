@@ -1,6 +1,10 @@
 package service
 
-import "gitlab.com/digineat/go-broker-test/internal/model"
+import (
+	"github.com/google/uuid"
+
+	"gitlab.com/digineat/go-broker-test/internal/model"
+)
 
 type Trades struct {
 	TradesRepo model.TradesRepository
@@ -17,6 +21,7 @@ type EnqueueTradeInput struct {
 
 func (t *Trades) EnqueueTrade(in EnqueueTradeInput) error {
 	newTrade := model.Trade{
+		ID:      uuid.NewString(),
 		Account: in.Account,
 		Symbol:  in.Symbol,
 		Volume:  in.Volume,
