@@ -1,0 +1,21 @@
+### Current statistics for the given account
+GET http://localhost:8080/stats/123
+Accept: application/json
+## {"account":"123","trades":1,"profit":500.0}
+
+### Enqueue trade; respond with 200 OK or 400 on errors
+POST http://localhost:8080/trades
+Content-Type: application/json
+
+{
+  "account": "123",
+  "symbol": "EURUSD",
+  "volume": 1.0,
+  "open": 1.1000,
+  "close": 1.1050,
+  "side": "buy"
+}
+
+### Health check endpoint (for Kubernetes liveness probe)
+GET http://localhost:8080/healthz
+Accept: text/plain
