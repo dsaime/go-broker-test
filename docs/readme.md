@@ -6,8 +6,7 @@
 
 Пример:
 ```sh
-sqlite data.db '' # Создать файлы базы данных 
-migrate -source file://$(pwd)/migrations/sqlite -database sqlite3://data.db up # Восстановить схему из скриптов миграции
+go run -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path ./migrations/sqlite -database sqlite3://data1.db up # Восстановить схему из скриптов миграции
 ```
 
 Запуск: 
