@@ -39,7 +39,7 @@ func upFromGooseMigrations(db *sqlx.DB, dir string) error {
 		if entry.IsDir() {
 			continue
 		}
-		if !strings.HasSuffix(entry.Name(), ".sql") {
+		if !strings.HasSuffix(entry.Name(), ".up.sql") {
 			continue
 		}
 		path := filepath.Join(dir, entry.Name())
@@ -48,15 +48,7 @@ func upFromGooseMigrations(db *sqlx.DB, dir string) error {
 			return err
 		}
 
-		// Разделяем содержимое файла по разделителю "-- +goose Down"
-		parts := strings.SplitN(string(file), "-- +goose Down", 2)
-		upPart := strings.TrimSpace(parts[0]) // Берем только часть до разделителя
-
-		if upPart == "" {
-			continue // Пропускаем пустые миграции
-		}
-
-		if _, err = db.Exec(upPart); err != nil {
+		if _, err = db.Exec(string(file)); err != nil {
 			return err
 		}
 	}

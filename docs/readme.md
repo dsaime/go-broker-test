@@ -2,12 +2,12 @@
 Состоит из двух исполняемых файлов, работающих с одной базой данных.
 
 Перед запуском сервиса, необходимо создать базу данных и воссоздать схему из `./migrations/`.
-Для миграции можно применять утилиту [goose](https://github.com/pressly/goose)
+Для миграции можно применять утилиту [migrate](https://github.com/golang-migrate/migrate)
 
 Пример:
 ```sh
 sqlite data.db '' # Создать файлы базы данных 
-goose --dir=./migrations/sqlite sqlite3 data.db up # Восстановить схему из скриптов миграции
+migrate -source file://$(pwd)/migrations/sqlite -database sqlite3://data.db up # Восстановить схему из скриптов миграции
 ```
 
 Запуск: 

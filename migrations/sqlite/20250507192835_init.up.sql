@@ -1,5 +1,3 @@
--- +goose Up
--- +goose StatementBegin
 CREATE TABLE trades_q
 (
     id      TEXT PRIMARY KEY,
@@ -10,9 +8,3 @@ CREATE TABLE trades_q
     close   FLOAT NOT NULL,
     side    INT   NOT NULL
 );
--- +goose StatementEnd
-
--- +goose Down
--- +goose StatementBegin
-DROP TABLE trades_q;
--- +goose StatementEnd
