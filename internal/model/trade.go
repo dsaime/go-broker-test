@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"regexp"
+	"slices"
 
 	"github.com/google/uuid"
 )
@@ -14,8 +15,19 @@ type Trade struct {
 	Volume  float64 // must be > 0
 	Open    float64 // must be > 0
 	Close   float64 // must be > 0
-	Side    string  //	either "buy" or "sell"
+	Side    string  // either "buy" or "sell"
+
+	WorkerID  string
+	JobStatus string
+	//	JobStatusUpdatedAt time.Time
 }
+
+const (
+	TradeJobStatusNew        = "new"
+	TradeJobStatusProcessing = "processing"
+	TradeJobStatusFailed     = "failed"
+	TradeJobStatusDone       = "done"
+)
 
 const (
 	TradeSideByy  = "buy"
@@ -23,13 +35,14 @@ const (
 )
 
 var (
-	ErrInvalidID      = errors.New("некорректное значение ID")
-	ErrInvalidAccount = errors.New("некорректное значение Account")
-	ErrInvalidSymbol  = errors.New("некорректное значение Symbol")
-	ErrInvalidVolume  = errors.New("некорректное значение Volume")
-	ErrInvalidOpen    = errors.New("некорректное значение Open")
-	ErrInvalidClose   = errors.New("некорректное значение Close")
-	ErrInvalidSide    = errors.New("некорректное значение Side")
+	ErrInvalidID        = errors.New("некорректное значение ID")
+	ErrInvalidAccount   = errors.New("некорректное значение Account")
+	ErrInvalidSymbol    = errors.New("некорректное значение Symbol")
+	ErrInvalidVolume    = errors.New("некорректное значение Volume")
+	ErrInvalidOpen      = errors.New("некорректное значение Open")
+	ErrInvalidClose     = errors.New("некорректное значение Close")
+	ErrInvalidSide      = errors.New("некорректное значение Side")
+	ErrInvalidJobStatus = errors.New("некорректное значение JobStatus")
 )
 
 var TradeSymbolRegex = regexp.MustCompile(`^[A-Z]{6}$`)
@@ -57,14 +70,29 @@ func (t Trade) Validate() error {
 		return ErrInvalidSide
 	}
 
+	if !slices.Contains([]string{
+		TradeJobStatusNew,
+		TradeJobStatusProcessing,
+		TradeJobStatusFailed,
+		TradeJobStatusDone,
+	}, t.JobStatus) {
+		return ErrInvalidJobStatus
+	}
+
 	return nil
 }
 
 type TradesRepository interface {
 	Save(Trade) error
 	List(TradeListFilter) ([]Trade, error)
+	UpdateNobodyAndGet(UpdateNobodyAndGetInput) ([]Trade, error)
 }
 
 type TradeListFilter struct {
 	Account string
+}
+
+type UpdateNobodyAndGetInput struct {
+	NewWorkerID  string
+	NewJobStatus string
 }

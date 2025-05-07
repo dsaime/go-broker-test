@@ -19,13 +19,15 @@ func saveTrade(t *testing.T, repo model.TradesRepository, trade model.Trade) mod
 
 func newRndTrade(t *testing.T, repo model.TradesRepository) model.Trade {
 	return saveTrade(t, repo, model.Trade{
-		ID:      uuid.NewString(),
-		Account: uuid.NewString(),
-		Symbol:  "RANDOM",
-		Volume:  float64(rand.Int63()),
-		Open:    float64(rand.Int63()),
-		Close:   float64(rand.Int63()),
-		Side:    []string{model.TradeSideByy, model.TradeSideSell}[rand.Intn(2)],
+		ID:        uuid.NewString(),
+		Account:   uuid.NewString(),
+		Symbol:    "RANDOM",
+		Volume:    float64(rand.Int63()),
+		Open:      float64(rand.Int63()),
+		Close:     float64(rand.Int63()),
+		Side:      []string{model.TradeSideByy, model.TradeSideSell}[rand.Intn(2)],
+		WorkerID:  uuid.NewString(),
+		JobStatus: model.TradeJobStatusNew,
 	})
 }
 
@@ -39,14 +41,17 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 		})
 		t.Run("без фильтра вернутся все записи", func(t *testing.T) {
 			r := newRepository()
-			const expectedCount = 10
-			for range expectedCount {
-				newRndTrade(t, r)
+			savedTrades := make([]model.Trade, 10)
+			for i := range savedTrades {
+				savedTrades[i] = newRndTrade(t, r)
 			}
-			trades, err := r.List(model.TradeListFilter{})
+			tradesFromRepo, err := r.List(model.TradeListFilter{})
 			assert.NoError(t, err)
-			assert.Len(t, trades, expectedCount)
-			// TODO: equality check
+			require.Len(t, tradesFromRepo, len(savedTrades))
+			// Сравнить
+			for i := range tradesFromRepo {
+				assert.Equal(t, savedTrades[i], tradesFromRepo[i])
+			}
 		})
 		t.Run("с фильтром по account вернутся записи с соответствующим account", func(t *testing.T) {
 			r := newRepository()
@@ -105,6 +110,64 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 			tradeFromRepo, err := r.List(model.TradeListFilter{})
 			require.NoError(t, err)
 			require.Len(t, tradeFromRepo, 1)
+		})
+	})
+	t.Run("UpdateNobodyAndGet", func(t *testing.T) {
+		t.Run("пустой репозиторий вернет пустой список", func(t *testing.T) {
+			r := newRepository()
+			trades, err := r.UpdateNobodyAndGet(model.UpdateNobodyAndGetInput{
+				NewWorkerID:  "123",
+				NewJobStatus: model.TradeJobStatusNew,
+			})
+			assert.NoError(t, err)
+			assert.Empty(t, trades)
+		})
+		t.Run("параметры можно передавать пустым", func(t *testing.T) {
+			r := newRepository()
+			trades, err := r.UpdateNobodyAndGet(model.UpdateNobodyAndGetInput{
+				NewWorkerID:  "",
+				NewJobStatus: "",
+			})
+			assert.NoError(t, err)
+			assert.Empty(t, trades)
+		})
+		t.Run("вернутся записи у которых не было WorkerID", func(t *testing.T) {
+			r := newRepository()
+			// Случайные
+			for range 10 {
+				newRndTrade(t, r)
+			}
+			// Не связаны ни с одним worker
+			const nobodyTradesSavedCount = 5
+			for range nobodyTradesSavedCount {
+				saveTrade(t, r, model.Trade{
+					ID:        uuid.NewString(),
+					WorkerID:  "",
+					JobStatus: "",
+				})
+			}
+			trades, err := r.UpdateNobodyAndGet(model.UpdateNobodyAndGetInput{})
+			assert.NoError(t, err)
+			assert.Len(t, trades, nobodyTradesSavedCount)
+		})
+		t.Run("после выполнения UpdateNobodyAndGet всем записям без WorkerID будет установлен NewWorkerID и NewJobStatus", func(t *testing.T) {
+			r := newRepository()
+			const nobodyTradesSavedCount = 10
+			for range nobodyTradesSavedCount {
+				saveTrade(t, r, model.Trade{ID: uuid.NewString()})
+			}
+			input := model.UpdateNobodyAndGetInput{
+				NewWorkerID:  uuid.NewString(),
+				NewJobStatus: model.TradeJobStatusProcessing,
+			}
+			trades, err := r.UpdateNobodyAndGet(input)
+			assert.NoError(t, err)
+			require.Len(t, trades, nobodyTradesSavedCount)
+			// Проверить, что все записи получили NewWorkerID и NewJobStatus
+			for _, trade := range trades {
+				assert.Equal(t, input.NewWorkerID, trade.WorkerID)
+				assert.Equal(t, input.NewJobStatus, trade.JobStatus)
+			}
 		})
 	})
 }

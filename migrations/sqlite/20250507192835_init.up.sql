@@ -6,5 +6,7 @@ CREATE TABLE trades_q
     volume  FLOAT NOT NULL,
     open    FLOAT NOT NULL,
     close   FLOAT NOT NULL,
-    side    INT   NOT NULL
+    side    TEXT   NOT NULL,
+    worker_id TEXT NOT NULL,
+    job_status TEXT NOT NULL
 );

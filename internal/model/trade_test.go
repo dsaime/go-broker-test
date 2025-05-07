@@ -1,22 +1,23 @@
 package model
 
 import (
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"testing"
 )
 
 func newValidTrade() Trade {
 	return Trade{
-		ID:      uuid.NewString(),
-		Account: "732cbdf0",
-		Symbol:  "AAABBB",
-		Volume:  300000.0,
-		Open:    200000.0,
-		Close:   100000.0,
-		Side:    TradeSideByy,
+		ID:        uuid.NewString(),
+		Account:   "732cbdf0",
+		Symbol:    "AAABBB",
+		Volume:    300000.0,
+		Open:      200000.0,
+		Close:     100000.0,
+		Side:      TradeSideByy,
+		WorkerID:  "worker123",
+		JobStatus: TradeJobStatusNew,
 	}
 }
 
@@ -31,7 +32,7 @@ func TestTrade_Validate(t *testing.T) {
 		}
 		for i := range validValues {
 			trade.ID = validValues[i]
-			require.NoError(t, trade.Validate())
+			assert.NoError(t, trade.Validate())
 		}
 
 		invalidValues := []string{
@@ -42,7 +43,7 @@ func TestTrade_Validate(t *testing.T) {
 		}
 		for i := range invalidValues {
 			trade.ID = invalidValues[i]
-			require.ErrorIs(t, trade.Validate(), ErrInvalidID)
+			assert.ErrorIs(t, trade.Validate(), ErrInvalidID)
 		}
 	})
 	t.Run("Account не должно быть пустым", func(t *testing.T) {
@@ -89,7 +90,7 @@ func TestTrade_Validate(t *testing.T) {
 		for _, symbol := range validSymbols {
 			trade.Symbol = symbol
 			err := trade.Validate()
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		}
 	})
 
@@ -147,7 +148,7 @@ func TestTrade_Validate(t *testing.T) {
 		}
 		for _, side := range invalidValues {
 			trade.Side = side
-			require.ErrorIs(t, trade.Validate(), ErrInvalidSide)
+			assert.ErrorIs(t, trade.Validate(), ErrInvalidSide)
 		}
 
 		validValues := []string{
@@ -156,7 +157,49 @@ func TestTrade_Validate(t *testing.T) {
 		}
 		for _, side := range validValues {
 			trade.Side = side
-			require.NoError(t, trade.Validate())
+			assert.NoError(t, trade.Validate())
+		}
+	})
+
+	t.Run("WorkerID может быть любым значением", func(t *testing.T) {
+		trade := newValidTrade()
+		validValues := []string{
+			"",
+			"0",
+			"1",
+			"w",
+			"worker",
+			"worker123",
+			"4cb5596d-0dea-45f6-b67a-ccb01206ccf8",
+		}
+		for _, workerID := range validValues {
+			trade.WorkerID = workerID
+			assert.NoError(t, trade.Validate())
+		}
+	})
+
+	t.Run("JobStatus может быть равным только определенным значениям", func(t *testing.T) {
+		trade := newValidTrade()
+		invalidValues := []string{
+			"",
+			"0",
+			"unknown",
+			"a",
+		}
+		for _, jobStatus := range invalidValues {
+			trade.JobStatus = jobStatus
+			assert.ErrorIs(t, trade.Validate(), ErrInvalidJobStatus)
+		}
+
+		validValues := []string{
+			"new",
+			"processing",
+			"failed",
+			"done",
+		}
+		for _, jobStatus := range validValues {
+			trade.JobStatus = jobStatus
+			assert.NoError(t, trade.Validate())
 		}
 	})
 }

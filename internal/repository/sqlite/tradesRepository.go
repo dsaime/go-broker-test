@@ -18,6 +18,23 @@ type TradesRepository struct {
 	db *sqlx.DB
 }
 
+func (r *TradesRepository) UpdateNobodyAndGet(in model.UpdateNobodyAndGetInput) ([]model.Trade, error) {
+	var trades []dbTrade
+
+	err := r.db.Select(&trades, `
+		UPDATE trades_q 
+		SET worker_id = $1,
+		    job_status = $2
+		WHERE worker_id = ''
+		RETURNING *
+	`, in.NewWorkerID, in.NewJobStatus)
+	if err != nil {
+		return nil, err
+	}
+
+	return tradesToModels(trades), nil
+}
+
 func (r *TradesRepository) List(filter model.TradeListFilter) ([]model.Trade, error) {
 	var trades []dbTrade
 
@@ -39,8 +56,8 @@ func (r *TradesRepository) Save(trade model.Trade) error {
 	}
 
 	if _, err := r.db.NamedExec(`
-		INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side)
-		VALUES (:id, :account, :symbol, :volume, :open, :close, :side)
+		INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status)
+		VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status)
 	`, tradeFromModel(trade)); err != nil {
 		return err
 	}
@@ -49,36 +66,42 @@ func (r *TradesRepository) Save(trade model.Trade) error {
 }
 
 type dbTrade struct {
-	ID      string  `db:"id"`
-	Account string  `db:"account"`
-	Symbol  string  `db:"symbol"`
-	Volume  float64 `db:"volume"`
-	Open    float64 `db:"open"`
-	Close   float64 `db:"close"`
-	Side    string  `db:"side"`
+	ID        string  `db:"id"`
+	Account   string  `db:"account"`
+	Symbol    string  `db:"symbol"`
+	Volume    float64 `db:"volume"`
+	Open      float64 `db:"open"`
+	Close     float64 `db:"close"`
+	Side      string  `db:"side"`
+	WorkerID  string  `db:"worker_id"`
+	JobStatus string  `db:"job_status"`
 }
 
 func tradeFromModel(modelTrade model.Trade) dbTrade {
 	return dbTrade{
-		ID:      modelTrade.ID,
-		Account: modelTrade.Account,
-		Symbol:  modelTrade.Symbol,
-		Volume:  modelTrade.Volume,
-		Open:    modelTrade.Open,
-		Close:   modelTrade.Close,
-		Side:    modelTrade.Side,
+		ID:        modelTrade.ID,
+		Account:   modelTrade.Account,
+		Symbol:    modelTrade.Symbol,
+		Volume:    modelTrade.Volume,
+		Open:      modelTrade.Open,
+		Close:     modelTrade.Close,
+		Side:      modelTrade.Side,
+		WorkerID:  modelTrade.WorkerID,
+		JobStatus: modelTrade.JobStatus,
 	}
 }
 
 func tradeToModel(t dbTrade) model.Trade {
 	return model.Trade{
-		ID:      t.ID,
-		Account: t.Account,
-		Symbol:  t.Symbol,
-		Volume:  t.Volume,
-		Open:    t.Open,
-		Close:   t.Close,
-		Side:    t.Side,
+		ID:        t.ID,
+		Account:   t.Account,
+		Symbol:    t.Symbol,
+		Volume:    t.Volume,
+		Open:      t.Open,
+		Close:     t.Close,
+		Side:      t.Side,
+		WorkerID:  t.WorkerID,
+		JobStatus: t.JobStatus,
 	}
 }
 
