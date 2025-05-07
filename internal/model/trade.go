@@ -20,6 +20,7 @@ type Trade struct {
 	WorkerID  string
 	JobStatus string
 	//	JobStatusUpdatedAt time.Time
+	Profit float64
 }
 
 const (

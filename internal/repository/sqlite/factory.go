@@ -15,6 +15,10 @@ type RepositoryFactory struct {
 	db *sqlx.DB
 }
 
+func (f *RepositoryFactory) DB() *sqlx.DB {
+	return f.db
+}
+
 func InitRepositoryFactory(config Config) (*RepositoryFactory, error) {
 	db, err := sqlx.Connect("sqlite3", config.DSN)
 	if err != nil {

@@ -50,8 +50,8 @@ func (r *TradesRepository) SaveAll(trades []model.Trade) error {
 
 	for _, trade := range trades {
 		if _, err = tx.NamedExec(`
-			INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status)
-			VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status)
+			INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status, profit)
+			VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status, :profit)
 		`, tradeFromModel(trade)); err != nil {
 			return err
 		}
@@ -98,8 +98,8 @@ func (r *TradesRepository) Save(trade model.Trade) error {
 	}
 
 	if _, err := r.db.NamedExec(`
-		INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status)
-		VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status)
+		INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status, profit)
+		VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status, :profit)
 	`, tradeFromModel(trade)); err != nil {
 		return err
 	}
@@ -117,6 +117,7 @@ type dbTrade struct {
 	Side      string  `db:"side"`
 	WorkerID  string  `db:"worker_id"`
 	JobStatus string  `db:"job_status"`
+	Profit    float64 `db:"profit"`
 }
 
 func tradeFromModel(modelTrade model.Trade) dbTrade {
@@ -130,6 +131,7 @@ func tradeFromModel(modelTrade model.Trade) dbTrade {
 		Side:      modelTrade.Side,
 		WorkerID:  modelTrade.WorkerID,
 		JobStatus: modelTrade.JobStatus,
+		Profit:    modelTrade.Profit,
 	}
 }
 
@@ -144,6 +146,7 @@ func tradeToModel(t dbTrade) model.Trade {
 		Side:      t.Side,
 		WorkerID:  t.WorkerID,
 		JobStatus: t.JobStatus,
+		Profit:    t.Profit,
 	}
 }
 

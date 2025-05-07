@@ -8,5 +8,6 @@ CREATE TABLE trades_q
     close   FLOAT NOT NULL,
     side    TEXT   NOT NULL,
     worker_id TEXT NOT NULL,
-    job_status TEXT NOT NULL
+    job_status TEXT NOT NULL,
+    profit  FLOAT NOT NULL
 );
