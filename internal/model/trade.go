@@ -84,6 +84,7 @@ func (t Trade) Validate() error {
 
 type TradesRepository interface {
 	Save(Trade) error
+	SaveAll([]Trade) error
 	List(TradeListFilter) ([]Trade, error)
 	UpdateNobodyAndGet(UpdateNobodyAndGetInput) ([]Trade, error)
 }

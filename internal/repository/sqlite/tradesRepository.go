@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -16,6 +17,47 @@ func (f *RepositoryFactory) NewTradesRepository() *TradesRepository {
 
 type TradesRepository struct {
 	db *sqlx.DB
+}
+
+func (r *TradesRepository) SaveAll(trades []model.Trade) error {
+	if len(trades) == 0 {
+		return nil
+	}
+	for _, trade := range trades {
+		if trade.ID == "" {
+			return errors.New("invalid ID in trade")
+		}
+	}
+
+	//if _, err := r.db.NamedExec(`
+	//	INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status)
+	//	VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status)
+	//`, tradesFromModels(trades)); err != nil {
+	//	return err
+	//}
+	//
+	//return nil
+
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	for _, trade := range trades {
+		if _, err = tx.NamedExec(`
+			INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status)
+			VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status)
+		`, tradeFromModel(trade)); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (r *TradesRepository) UpdateNobodyAndGet(in model.UpdateNobodyAndGetInput) ([]model.Trade, error) {

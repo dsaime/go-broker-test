@@ -17,8 +17,8 @@ func saveTrade(t *testing.T, repo model.TradesRepository, trade model.Trade) mod
 	return trade
 }
 
-func newRndTrade(t *testing.T, repo model.TradesRepository) model.Trade {
-	return saveTrade(t, repo, model.Trade{
+func newRndTrade() model.Trade {
+	return model.Trade{
 		ID:        uuid.NewString(),
 		Account:   uuid.NewString(),
 		Symbol:    "RANDOM",
@@ -28,7 +28,13 @@ func newRndTrade(t *testing.T, repo model.TradesRepository) model.Trade {
 		Side:      []string{model.TradeSideByy, model.TradeSideSell}[rand.Intn(2)],
 		WorkerID:  uuid.NewString(),
 		JobStatus: model.TradeJobStatusNew,
-	})
+	}
+}
+
+func saveTrades(t *testing.T, repo model.TradesRepository, trades []model.Trade) []model.Trade {
+	err := repo.SaveAll(trades)
+	require.NoError(t, err)
+	return trades
 }
 
 func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesRepository) {
@@ -43,7 +49,7 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 			r := newRepository()
 			savedTrades := make([]model.Trade, 10)
 			for i := range savedTrades {
-				savedTrades[i] = newRndTrade(t, r)
+				savedTrades[i] = saveTrade(t, r, newRndTrade())
 			}
 			tradesFromRepo, err := r.List(model.TradeListFilter{})
 			assert.NoError(t, err)
@@ -57,7 +63,7 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 			r := newRepository()
 			// Случайные
 			for range 10 {
-				newRndTrade(t, r)
+				saveTrade(t, r, newRndTrade())
 			}
 
 			// Искомые
@@ -92,7 +98,7 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 		t.Run("сохраненный можно запросить и он полностью соответствует сохраняемому", func(t *testing.T) {
 			r := newRepository()
 			// Сохранить
-			savedTrade := newRndTrade(t, r)
+			savedTrade := saveTrade(t, r, newRndTrade())
 			tradeFromRepo, err := r.List(model.TradeListFilter{})
 			require.NoError(t, err)
 			require.Len(t, tradeFromRepo, 1)
@@ -101,15 +107,47 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 		})
 		t.Run("перезапись при сохранении существующего ID", func(t *testing.T) {
 			r := newRepository()
-
-			savedTrade := newRndTrade(t, r)
+			savedTrade := saveTrade(t, r, newRndTrade())
 			for range 10 {
 				saveTrade(t, r, savedTrade)
 			}
-
 			tradeFromRepo, err := r.List(model.TradeListFilter{})
 			require.NoError(t, err)
 			require.Len(t, tradeFromRepo, 1)
+		})
+	})
+	t.Run("SaveAll", func(t *testing.T) {
+		t.Run("нельзя сохранять без ID", func(t *testing.T) {
+			r := newRepository()
+			trades := []model.Trade{{ID: ""}, {ID: "132"}}
+			err := r.SaveAll(trades)
+			assert.Error(t, err)
+		})
+		t.Run("остальные поля могут быть пустыми", func(t *testing.T) {
+			r := newRepository()
+			trades := []model.Trade{{ID: "412"}, {ID: "132"}}
+			err := r.SaveAll(trades)
+			assert.NoError(t, err)
+		})
+		t.Run("сохраненный можно запросить и он полностью соответствует сохраняемому", func(t *testing.T) {
+			r := newRepository()
+			// Сохранить
+			savedTrades := saveTrades(t, r, []model.Trade{
+				newRndTrade(),
+				newRndTrade(),
+				newRndTrade(),
+				newRndTrade(),
+			})
+			tradeFromRepo, err := r.List(model.TradeListFilter{})
+			require.NoError(t, err)
+			require.Len(t, tradeFromRepo, len(savedTrades))
+			// Сравнить
+			for i := range savedTrades {
+				assert.Equal(t, savedTrades[i], tradeFromRepo[i])
+			}
+		})
+		t.Run("перезапись при сохранении существующего ID", func(t *testing.T) {
+			// TODO
 		})
 	})
 	t.Run("UpdateNobodyAndGet", func(t *testing.T) {
@@ -135,7 +173,7 @@ func TradesRepositoryTests(t *testing.T, newRepository func() model.TradesReposi
 			r := newRepository()
 			// Случайные
 			for range 10 {
-				newRndTrade(t, r)
+				saveTrade(t, r, newRndTrade())
 			}
 			// Не связаны ни с одним worker
 			const nobodyTradesSavedCount = 5

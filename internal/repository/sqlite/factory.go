@@ -20,15 +20,14 @@ func InitRepositoryFactory(config Config) (*RepositoryFactory, error) {
 	if err != nil {
 		return nil, err
 	}
-	rf := &RepositoryFactory{
-		db: db,
-	}
 	// Test database connection
 	if err = db.Ping(); err != nil {
 		return nil, fmt.Errorf("db.Ping: %w", err)
 	}
 
-	return rf, nil
+	return &RepositoryFactory{
+		db: db,
+	}, nil
 }
 
 func (f *RepositoryFactory) Close() error {
