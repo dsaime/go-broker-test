@@ -88,5 +88,23 @@ type AccountStatisticsInput struct {
 }
 
 func (t *Trades) AccountStatistics(in AccountStatisticsInput) (model.AccountStats, error) {
-	return model.AccountStats{}, nil
+	if in.Account == "" {
+		return model.AccountStats{}, ErrRequiredAccountID
+	}
+
+	trades, err := t.TradesRepo.List(model.TradeListFilter{Account: in.Account})
+	if err != nil {
+		return model.AccountStats{}, err
+	}
+
+	stats := model.AccountStats{
+		Account: in.Account,
+		Trades:  len(trades),
+		Profit:  0,
+	}
+	for _, trade := range trades {
+		stats.Profit += trade.Profit
+	}
+
+	return stats, nil
 }

@@ -29,35 +29,35 @@ func (r *TradesRepository) SaveAll(trades []model.Trade) error {
 		}
 	}
 
-	//if _, err := r.db.NamedExec(`
-	//	INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status)
-	//	VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status)
-	//`, tradesFromModels(trades)); err != nil {
-	//	return err
-	//}
-	//
-	//return nil
-
-	tx, err := r.db.Beginx()
-	if err != nil {
+	if _, err := r.db.NamedExec(`
+		INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status, profit)
+		VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status, :profit)
+	`, tradesFromModels(trades)); err != nil {
 		return err
 	}
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		}
-	}()
 
-	for _, trade := range trades {
-		if _, err = tx.NamedExec(`
-			INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status, profit)
-			VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status, :profit)
-		`, tradeFromModel(trade)); err != nil {
-			return err
-		}
-	}
+	return nil
 
-	return tx.Commit()
+	//tx, err := r.db.Beginx()
+	//if err != nil {
+	//	return err
+	//}
+	//defer func() {
+	//	if err != nil {
+	//		_ = tx.Rollback()
+	//	}
+	//}()
+	//
+	//for _, trade := range trades {
+	//	if _, err = tx.NamedExec(`
+	//		INSERT OR REPLACE INTO trades_q (id, account, symbol, volume, open, close, side, worker_id, job_status, profit)
+	//		VALUES (:id, :account, :symbol, :volume, :open, :close, :side, :worker_id, :job_status, :profit)
+	//	`, tradeFromModel(trade)); err != nil {
+	//		return err
+	//	}
+	//}
+	//
+	//return tx.Commit()
 }
 
 func (r *TradesRepository) UpdateNobodyAndGet(in model.UpdateNobodyAndGetInput) ([]model.Trade, error) {

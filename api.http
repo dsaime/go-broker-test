@@ -1,5 +1,5 @@
 ### Current statistics for the given account
-GET http://localhost:8080/stats/123
+GET http://localhost:8080/stats/qweuietwk
 Accept: application/json
 ## {"account":"123","trades":1,"profit":500.0}
 

@@ -30,6 +30,7 @@ func (c *Controller) modulation(handle HandlerFunc) http.HandlerFunc {
 		// Выполнить обработку запроса
 		respData, err = handle(Context{request: r})
 		if err != nil {
+			slog.Error(fmt.Sprintf("handle request %s: %v", r.URL.Path, err))
 			// Если есть ошибка
 			w.WriteHeader(httpStatusCodeByErr(err))
 			respData = ResponseError{
