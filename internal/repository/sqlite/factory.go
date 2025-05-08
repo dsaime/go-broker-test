@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -36,4 +37,12 @@ func InitRepositoryFactory(config Config) (*RepositoryFactory, error) {
 
 func (f *RepositoryFactory) Close() error {
 	return f.db.Close()
+}
+
+func (f *RepositoryFactory) Healthcheck(ctx context.Context) error {
+	if err := f.db.PingContext(ctx); err != nil {
+		return fmt.Errorf("db.PingContext: %w", err)
+	}
+
+	return nil
 }

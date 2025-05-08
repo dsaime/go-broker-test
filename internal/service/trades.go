@@ -82,3 +82,11 @@ func (t *Trades) CalculateProfitOnNobodyTrades(in CalculateProfitOnNobodyTradesI
 
 	return nil
 }
+
+type AccountStatisticsInput struct {
+	Account string
+}
+
+func (t *Trades) AccountStatistics(in AccountStatisticsInput) (model.AccountStats, error) {
+	return model.AccountStats{}, nil
+}

@@ -98,3 +98,9 @@ type UpdateNobodyAndGetInput struct {
 	NewWorkerID  string
 	NewJobStatus string
 }
+
+type AccountStats struct {
+	Account string
+	Trades  int
+	Profit  float64
+}

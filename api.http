@@ -8,11 +8,11 @@ POST http://localhost:8080/trades
 Content-Type: application/json
 
 {
-  "account": "123",
+  "account": "{{$random.uuid}}",
   "symbol": "EURUSD",
-  "volume": 1.0,
-  "open": 1.1000,
-  "close": 1.1050,
+  "volume": {{$random.float(1.0, 333999.0)}},
+  "open": {{$random.float(1.0, 333999.0)}},
+  "close": {{$random.float(1.0, 333999.0)}},
   "side": "buy"
 }
 

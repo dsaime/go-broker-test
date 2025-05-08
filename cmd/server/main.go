@@ -1,60 +1,74 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/exp/slog"
+
+	httpController "gitlab.com/digineat/go-broker-test/internal/controller/http"
+	"gitlab.com/digineat/go-broker-test/internal/health"
+	"gitlab.com/digineat/go-broker-test/internal/repository/sqlite"
+	"gitlab.com/digineat/go-broker-test/internal/service"
 )
 
 func main() {
-	// Command line flags
-	dbPath := flag.String("db", "data.db", "path to SQLite database")
-	listenAddr := flag.String("listen", "8080", "HTTP server listen address")
-	flag.Parse()
+	cfg := initConfig()
 
-	// Initialize database connection
-	db, err := sql.Open("sqlite3", *dbPath)
+	deps, closeDependencies, err := initDependencies(cfg.DBPath)
 	if err != nil {
-		log.Fatalf("Failed to open database: %v", err)
+		slog.Error("Failed to init dependencies: " + err.Error())
+		os.Exit(1)
 	}
-	defer db.Close()
+	defer closeDependencies()
 
-	// Test database connection
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
-	}
-
-	// Initialize HTTP server
-	mux := http.NewServeMux()
-
-	// POST /trades endpoint
-	mux.HandleFunc("POST /trades", func(w http.ResponseWriter, r *http.Request) {
-		// TODO: Write code here
-		w.WriteHeader(http.StatusOK)
-	})
-
-	// GET /stats/{acc} endpoint
-	mux.HandleFunc("GET /stats/{acc}", func(w http.ResponseWriter, r *http.Request) {
-		// TODO: Write code here
-		w.WriteHeader(http.StatusOK)
-	})
-
-	// GET /healthz endpoint
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
-		// TODO: Write code here
-		// 1. Check database connection
-		// 2. Return health status
-		w.WriteHeader(http.StatusOK)
-	})
+	controller := httpController.InitController(deps.trades, deps.healthz)
 
 	// Start server
-	serverAddr := fmt.Sprintf(":%s", *listenAddr)
+	serverAddr := fmt.Sprintf(":%s", cfg.ListenAddr)
 	log.Printf("Starting server on %s", serverAddr)
-	if err := http.ListenAndServe(serverAddr, mux); err != nil {
+	if err := http.ListenAndServe(serverAddr, controller); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
+}
+
+func initConfig() (cfg struct {
+	DBPath     string
+	ListenAddr string
+}) {
+	// Command line flags
+	flag.StringVar(&cfg.DBPath, "db", "data.db", "path to SQLite database")
+	flag.StringVar(&cfg.ListenAddr, "listen", "8080", "HTTP server listen address")
+	flag.Parse()
+
+	return cfg
+}
+
+func initDependencies(dbPath string) (deps struct {
+	repositoryFactory *sqlite.RepositoryFactory
+	trades            *service.Trades
+	healthz           health.Healthchecking
+}, closeDependencies func(), err error) {
+	deps.repositoryFactory, err = sqlite.InitRepositoryFactory(sqlite.Config{DSN: dbPath})
+	if err != nil {
+		return deps, nil, fmt.Errorf("sqlite.InitRepositoryFactory: %w", err)
+	}
+
+	deps.trades = &service.Trades{
+		TradesRepo: deps.repositoryFactory.NewTradesRepository(),
+	}
+
+	deps.healthz = health.Health{Components: map[string]health.Healthchecking{
+		"repositoryFactory": deps.repositoryFactory,
+	}}
+
+	return deps, func() {
+		if err := deps.repositoryFactory.Close(); err != nil {
+			slog.Error("Failed to close repository factory: " + err.Error())
+		}
+	}, nil
 }
