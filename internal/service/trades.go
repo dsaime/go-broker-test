@@ -47,9 +47,9 @@ type CalculateProfitOnNobodyTradesInput struct {
 	WorkerID string
 }
 
-func (t *Trades) CalculateProfitOnNobodyTrades(in CalculateProfitOnNobodyTradesInput) error {
+func (t *Trades) CalculateProfitOnNobodyTrades(in CalculateProfitOnNobodyTradesInput) ([]model.Trade, error) {
 	if in.WorkerID == "" {
-		return ErrRequiredWorkerID
+		return nil, ErrRequiredWorkerID
 	}
 
 	// "Ничейным задачам" назначить worker и сразу установить новый статус
@@ -59,7 +59,7 @@ func (t *Trades) CalculateProfitOnNobodyTrades(in CalculateProfitOnNobodyTradesI
 	}
 	trades, err := t.TradesRepo.UpdateNobodyAndGet(updateIn)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for i, trade := range trades {
@@ -77,10 +77,10 @@ func (t *Trades) CalculateProfitOnNobodyTrades(in CalculateProfitOnNobodyTradesI
 
 	// Записать изменения в БД
 	if err = t.TradesRepo.SaveAll(trades); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return trades, nil
 }
 
 type AccountStatisticsInput struct {

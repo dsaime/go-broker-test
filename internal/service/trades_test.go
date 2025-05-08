@@ -24,8 +24,9 @@ func (suite *servicesTestSuite) Test_Trades_CalculateProfitOnNobodyTrades() {
 		input := CalculateProfitOnNobodyTradesInput{
 			WorkerID: "",
 		}
-		err := suite.ss.trades.CalculateProfitOnNobodyTrades(input)
+		cltrades, err := suite.ss.trades.CalculateProfitOnNobodyTrades(input)
 		suite.ErrorIs(err, ErrRequiredWorkerID)
+		suite.Empty(cltrades)
 	})
 	suite.Run("обрабатываются только трейды без воркера", func() {
 		// Трейды со случайными воркерами
@@ -44,8 +45,9 @@ func (suite *servicesTestSuite) Test_Trades_CalculateProfitOnNobodyTrades() {
 		input := CalculateProfitOnNobodyTradesInput{
 			WorkerID: uuid.NewString(),
 		}
-		err := suite.ss.trades.CalculateProfitOnNobodyTrades(input)
+		cltrades, err := suite.ss.trades.CalculateProfitOnNobodyTrades(input)
 		suite.Require().NoError(err)
+		suite.Require().NotEmpty(cltrades)
 
 		// Получить трейды
 		trades, err := suite.rr.trades.List(model.TradeListFilter{})
@@ -74,8 +76,9 @@ func (suite *servicesTestSuite) Test_Trades_CalculateProfitOnNobodyTrades() {
 		input := CalculateProfitOnNobodyTradesInput{
 			WorkerID: uuid.NewString(),
 		}
-		err := suite.ss.trades.CalculateProfitOnNobodyTrades(input)
+		cltrades, err := suite.ss.trades.CalculateProfitOnNobodyTrades(input)
 		suite.Require().NoError(err)
+		suite.Require().NotEmpty(cltrades)
 
 		// Получить трейды
 		trades, err := suite.rr.trades.List(model.TradeListFilter{})
@@ -142,8 +145,9 @@ func (suite *servicesTestSuite) Test_Trades_CalculateProfitOnNobodyTrades() {
 		input := CalculateProfitOnNobodyTradesInput{
 			WorkerID: uuid.NewString(),
 		}
-		err := suite.ss.trades.CalculateProfitOnNobodyTrades(input)
+		cltrades, err := suite.ss.trades.CalculateProfitOnNobodyTrades(input)
 		suite.Require().NoError(err)
+		suite.Require().NotEmpty(cltrades)
 
 		// Получить трейды
 		trades, err := suite.rr.trades.List(model.TradeListFilter{})

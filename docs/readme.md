@@ -35,3 +35,22 @@ go vet ./... && golangci-lint run -v -j $(( $(nproc) - 1))
 ```sh
 go test -race ./...
 ```
+
+Погенерить трейды:
+```sh
+for i in {1..10000}; do curl -X POST --location "http://localhost:8080/trades" -H "Content-Type: application/json" -d '{
+  "account": "qweuietwk",
+  "symbol": "EURUSD",
+  "volume": 9.0,
+  "open": 3339.0,
+  "close": 3399.0,
+  "side": "buy"
+}' & sleep 0.01; done; wait; echo AllOk!
+```
+
+Посмотреть распределение по воркерам:
+```sql
+select worker_id, job_status, count(1)
+from trades_q
+group by worker_id, job_status
+```

@@ -53,8 +53,12 @@ func initConfig() (cfg struct {
 func runMainWorkerLoop(ctx context.Context, trades *service.Trades, workerID string, pollInterval time.Duration) error {
 	for {
 		in := service.CalculateProfitOnNobodyTradesInput{WorkerID: workerID}
-		if err := trades.CalculateProfitOnNobodyTrades(in); err != nil {
+		cltrades, err := trades.CalculateProfitOnNobodyTrades(in)
+		if err != nil {
 			slog.Error("trades.CalculateProfitOnNobodyTrades: " + err.Error())
+		}
+		if len(cltrades) > 0 {
+			slog.Info(fmt.Sprintf("Profit calculated for trades: %v", len(cltrades)))
 		}
 
 		select {

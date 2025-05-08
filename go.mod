@@ -6,7 +6,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/mattn/go-sqlite3 v1.14.28
-	github.com/saime-0/nice-pea-chat v0.0.0-20250504143754-cc58d1d32187
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 )
