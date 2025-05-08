@@ -6,9 +6,6 @@ import (
 )
 
 func httpStatusCodeByErr(err error) int {
-	//if errors.Is(err, ErrUnauthorized) {
-	//	return http.StatusUnauthorized
-	//}
 	if errors.Is(err, ErrJsonMarshalResponseData) {
 		return http.StatusInternalServerError
 	}
