@@ -39,6 +39,10 @@ func (c *Controller) modulation(handle HandlerFunc) http.HandlerFunc {
 			}
 		}
 
+		if respData == nil {
+			return
+		}
+
 		// Если ответ это строка, перезаписать структурой
 		if s, ok := respData.(string); ok {
 			// Если ответ это строка
